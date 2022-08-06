@@ -1,22 +1,20 @@
-import asyncio
 import os
-import urllib.request
 import requests
+import json
+from flask import Flask
+import datetime
 
 from PyPDF2 import PdfReader
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver import Chrome
 from selenium.webdriver import ChromeOptions
-from bs4 import BeautifulSoup
-
 
 headers = {
     "User-Agent": "Chrome/51.0.2704.103",
 }
 
 
-async def download_pdf(url, filename, headers):
+def download_pdf(url, filename, headers):
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         with open(filename, "wb") as f:
@@ -30,14 +28,12 @@ options.headless = True
 
 url = "https://www.bseindia.com/corporates/ann.html"
 
-driver = webdriver.Chrome(options=options)
+driver = webdriver.Chrome(executable_path="F:/Corporate-Announcements/chromedriver.exe", options=options)
 
 driver.get(url)
 
-
 elements = driver.find_elements(
     By.CLASS_NAME, 'tablebluelink')
-
 
 skip = True
 
@@ -51,12 +47,12 @@ keywords = ["Target entity", "Amalgamation",
 ####################################################
 
 for ele in elements:
-    if (skip):
+    if skip:
         skip = False
         continue
 
     xpath = '//*[@id = "lblann"]/table/tbody/tr[4]/td/table[' + \
-        str(i) + ']/tbody/tr[1]/td[1]/a'
+            str(i) + ']/tbody/tr[1]/td[1]/a'
 
     title = driver.find_element(
         By.XPATH, xpath).text
@@ -65,30 +61,53 @@ for ele in elements:
 
     filename = 'file.pdf'
 
-    asyncio.run(download_pdf(link, filename, headers))
+    download_pdf(link, filename, headers)
 
-    reader = PdfReader('file.pdf', strict=False)
-    number_of_pages = len(reader.pages)
-
-    txt = ""
-    for page in reader.pages:
-        txt += page.extract_text().lower()
-
-    txt = txt.split(' ')
-
-    keys = []
-    for key in keywords:
-        if (key.lower() in txt):
-            keys.append(key)
+    try:
+        reader = PdfReader('file.pdf', strict=False)
+        txt = ""
+        for page in reader.pages:
+            txt += page.extract_text().lower()
+        txt = txt.split(' ')
+        keys = []
+        for key in keywords:
+            if key.lower() in txt:
+                keys.append(key)
+        print("pdf read")
+    except:
+        print("cant read pdf")
 
     data.append({'title': title, 'link': link, 'keywords': keys})
 
     i += 1
 
 ##############################################################
-
-os.remove('file.pdf')
+try:
+    os.remove('file.pdf')
+except:
+    print("No pdf file found")
 
 driver.quit()
 
-print(data)
+json_object = json.dumps(data, indent=4)
+
+print(json_object)
+
+# Initialize Flask:
+
+x = datetime.datetime.now()
+
+# Initializing flask app
+app = Flask(__name__)
+
+
+# Route for seeing a data
+@app.route('/')
+def get_time():
+    # Returning an api for showing in  reactjs
+    return json_object
+
+
+# Running app
+if __name__ == '__main__':
+    app.run(host="localhost", port=5000, debug=True)
