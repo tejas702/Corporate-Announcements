@@ -1,8 +1,9 @@
 import os
 import requests
 import json
-from flask import Flask
+from flask import Flask, jsonify
 import datetime
+from flask_cors import CORS
 
 from PyPDF2 import PdfReader
 from selenium import webdriver
@@ -91,7 +92,7 @@ driver.quit()
 
 json_object = json.dumps(data, indent=4)
 
-print(json_object)
+#print(json_object)
 
 # Initialize Flask:
 
@@ -99,13 +100,13 @@ x = datetime.datetime.now()
 
 # Initializing flask app
 app = Flask(__name__)
-
+CORS(app)
 
 # Route for seeing a data
 @app.route('/')
 def get_time():
     # Returning an api for showing in  reactjs
-    return json_object
+    return jsonify(data)
 
 
 # Running app
