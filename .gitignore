@@ -1,1 +1,4 @@
 *.exe
+*.iml
+*.xml
+*.idea
