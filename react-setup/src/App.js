@@ -24,14 +24,14 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>React and flask</h1>
-        <h1>{typeof lis}</h1>
         {lis.map((item) => {
           return (
-            <div>
-              <p>{item.title}</p>
-              <p>{item.link}</p>
-              <p>{item.keywords}</p>
-            </div>
+		item.keywords.length > 0 && 	
+			<div>
+				<p>{item.title}</p>
+				<p>{item.link}</p>
+				<p>{item.keywords}</p>
+			</div>
           );
         })}
       </header>
