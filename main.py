@@ -4,15 +4,37 @@ import json
 from flask import Flask, jsonify
 import datetime
 from flask_cors import CORS
+import csv
+import smtplib
+import ssl
 
 from PyPDF2 import PdfReader
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver import ChromeOptions
 
+# selenium setup
 headers = {
     "User-Agent": "Chrome/51.0.2704.103",
 }
+
+options = ChromeOptions()
+options.headless = True
+
+url = "https://www.bseindia.com/corporates/ann.html"
+
+driver = webdriver.Chrome(options=options)
+
+driver.get(url)
+
+
+# Initializing flask app
+app = Flask(__name__)
+CORS(app)
+
+
+data = []
+x = datetime.datetime.now()
 
 
 def download_pdf(url, filename, headers):
@@ -24,91 +46,86 @@ def download_pdf(url, filename, headers):
         print(response.status_code)
 
 
-options = ChromeOptions()
-options.headless = True
+def scrape_data():
+    i = 1
+    skip = True
+    elements = driver.find_elements(
+        By.CLASS_NAME, 'tablebluelink')
 
-url = "https://www.bseindia.com/corporates/ann.html"
+    keywords = ["Target entity", "Amalgamation",
+                "Preferential allotment", 'Rights issue', 'Capacity expansion']
 
-driver = webdriver.Chrome(executable_path="F:/Corporate-Announcements/chromedriver.exe", options=options)
+    for ele in elements:
+        if skip:
+            skip = False
+            continue
 
-driver.get(url)
+        xpath = '//*[@id = "lblann"]/table/tbody/tr[4]/td/table[' + \
+                str(i) + ']/tbody/tr[1]/td[1]/a'
 
-elements = driver.find_elements(
-    By.CLASS_NAME, 'tablebluelink')
+        title = driver.find_element(
+            By.XPATH, xpath).text
 
-skip = True
+        link = ele.get_attribute('href')
 
-i = 1
+        filename = 'file.pdf'
 
-data = []
+        download_pdf(link, filename, headers)
 
-keywords = ["Target entity", "Amalgamation",
-            "Preferential allotment", 'Rights issue', 'Capacity expansion']
+        try:
+            reader = PdfReader('file.pdf', strict=False)
+            txt = ""
+            for page in reader.pages:
+                txt += page.extract_text().lower()
+            txt = txt.split(' ')
+            keys = []
+            for key in keywords:
+                if key.lower() in txt:
+                    keys.append(key)
 
-####################################################
+            data.append({'title': title, 'link': link, 'keywords': keys})
+            print("pdf read")
+        except:
+            print("cant read pdf")
 
-for ele in elements:
-    if skip:
-        skip = False
-        continue
-
-    xpath = '//*[@id = "lblann"]/table/tbody/tr[4]/td/table[' + \
-            str(i) + ']/tbody/tr[1]/td[1]/a'
-
-    title = driver.find_element(
-        By.XPATH, xpath).text
-
-    link = ele.get_attribute('href')
-
-    filename = 'file.pdf'
-
-    download_pdf(link, filename, headers)
+        i += 1
 
     try:
-        reader = PdfReader('file.pdf', strict=False)
-        txt = ""
-        for page in reader.pages:
-            txt += page.extract_text().lower()
-        txt = txt.split(' ')
-        keys = []
-        for key in keywords:
-            if key.lower() in txt:
-                keys.append(key)
-        print("pdf read")
+        os.remove('file.pdf')
     except:
-        print("cant read pdf")
+        print("No pdf file found")
 
-    data.append({'title': title, 'link': link, 'keywords': keys})
 
-    i += 1
+def send_mail():
+    message = """Subject: Your grade
 
-##############################################################
-try:
-    os.remove('file.pdf')
-except:
-    print("No pdf file found")
+    Hi {name}, your grade is {grade}"""
+    from_address = "email"  # email
+    password = "password"  # password
 
-driver.quit()
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        server.login(from_address, password)
+        with open("contacts_file.csv") as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip header row
+            for name, email, grade in reader:
+                server.sendmail(
+                    from_address,
+                    email,
+                    message.format(name=name, grade=grade),
+                )
 
-json_object = json.dumps(data, indent=4)
-
-#print(json_object)
-
-# Initialize Flask:
-
-x = datetime.datetime.now()
-
-# Initializing flask app
-app = Flask(__name__)
-CORS(app)
 
 # Route for seeing a data
 @app.route('/')
-def get_time():
-    # Returning an api for showing in  reactjs
-    return jsonify(data)
+def get_data():
+    print('flask started....')
+    return jsonify(json.dumps(data, indent=4))
 
 
-# Running app
+# main method
 if __name__ == '__main__':
-    app.run(host="localhost", port=5000, debug=True)
+    scrape_data()
+    # send_mail() # commented temporarily
+    app.run(host="localhost", port=5000)
