@@ -121,11 +121,11 @@ def send_mail():
 @app.route('/')
 def get_data():
     print('flask started....')
-    return jsonify(json.dumps(data, indent=4))
+    return jsonify(data)
 
 
 # main method
 if __name__ == '__main__':
     scrape_data()
     # send_mail() # commented temporarily
-    app.run(host="localhost", port=5000)
+    app.run(host="localhost", port=5000, debug=True)
