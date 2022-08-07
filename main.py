@@ -117,7 +117,14 @@ def send_mail():
                 )
 
 
+# def job():
+#     print('ashish')
+    # scrape_data()
+    # send_mail() # commented temporarily
+
 # Route for seeing a data
+
+
 @app.route('/')
 def get_data():
     print('flask started....')
@@ -128,4 +135,4 @@ def get_data():
 if __name__ == '__main__':
     scrape_data()
     # send_mail() # commented temporarily
-    app.run(host="localhost", port=5000, debug=True)
+    app.run(host="localhost", port=5000)
