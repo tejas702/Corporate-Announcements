@@ -1,6 +1,7 @@
 // Importing modules
 import React, { useState, useEffect } from "react";
 import "./App.css";
+import Table from "react-bootstrap/Table";
 
 function App() {
   // usestate for setting a javascript
@@ -23,17 +24,35 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>React and flask</h1>
-        <h1>{typeof lis}</h1>
-        {lis.map((item) => {
-          return (
-            <div>
-              <p>{item.title}</p>
-              <p>{item.link}</p>
-              <p>{item.keywords}</p>
-            </div>
-          );
-        })}
+        <h1>Bombay Stock Exchange</h1>
+        <Table striped bordered hover responsive variant="dark">
+          <thead>
+            <tr>
+              <th>Keywords</th>
+              <th>Title</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lis.map((item) => {
+              return (
+                item.keywords.length > 0 && (
+                  <tr>
+                    <td>{item.keywords}</td>
+                    <td>
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {item.title}
+                      </a>
+                    </td>
+                  </tr>
+                )
+              );
+            })}
+          </tbody>
+        </Table>
       </header>
     </div>
   );
