@@ -24,7 +24,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Bombay Stock Exchange</h1>
+        <h1>Corporate Announcements</h1>
         <Table striped bordered hover responsive variant="dark">
           <thead>
             <tr>

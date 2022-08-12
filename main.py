@@ -24,7 +24,7 @@ options.headless = True
 
 url = "https://www.bseindia.com/corporates/ann.html"
 
-driver = webdriver.Chrome(options=options)
+driver = webdriver.Chrome(executable_path="F:/Corporate-Announcements/chromedriver.exe",options=options)
 
 driver.get(url)
 
