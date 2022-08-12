@@ -12,6 +12,7 @@ from PyPDF2 import PdfReader
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver import ChromeOptions
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # selenium setup
 headers = {
@@ -52,8 +53,35 @@ def scrape_data():
     elements = driver.find_elements(
         By.CLASS_NAME, 'tablebluelink')
 
-    keywords = ["Target entity", "Amalgamation",
-                "Preferential allotment", 'Rights issue', 'Capacity expansion']
+    keywords = ['Target entity',
+                'Amalgamation',
+                'Preferential allotment',
+                'Rights issue',
+                'Capacity expansion',
+                'Press release',
+                'MoU*',
+                'Acquisition',
+                'sale of investment',
+                'capex',
+                'new project',
+                'delisting',
+                'credit rating',
+                'scheme of arrangement',
+                'restructuring',
+                'merger',
+                'shut down',
+                'rights issue',
+                'New business line',
+                'Offer for sale',
+                'Change in management ',
+                'Buy back',
+                'Demerger',
+                'Updates on acquisition',
+                'Buisness update',
+                'Speech',
+                'Change of company name',
+                'Expanded capacity',
+                'Proposed acquisition', ]
 
     for ele in elements:
         if skip:
@@ -77,10 +105,10 @@ def scrape_data():
             txt = ""
             for page in reader.pages:
                 txt += page.extract_text().lower()
-            txt = txt.split(' ')
+
             keys = []
             for key in keywords:
-                if key.lower() in txt:
+                if (key.lower() in txt) or (key.lower() in title):
                     keys.append(key)
 
             data.append({'title': title, 'link': link, 'keywords': keys})
@@ -133,6 +161,9 @@ def get_data():
 
 # main method
 if __name__ == '__main__':
+    # sched = BackgroundScheduler(daemon=True)
+    # sched.add_job(scrape_data, 'interval', minutes=24 * 60)
+    # sched.start()
     scrape_data()
     # send_mail() # commented temporarily
-    app.run(host="localhost", port=5000)
+    app.run(port=5000)
